@@ -20,7 +20,7 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.ewalletbotorg:gammaengage-android-sdk:0.1.0")
+    implementation("com.github.ewalletbotorg:gammaengage-android-sdk:0.1.1")
 }
 ```
 
