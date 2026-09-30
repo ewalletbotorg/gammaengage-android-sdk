@@ -40,6 +40,7 @@ object GammaEngage {
     private var config: GammaEngageConfig? = null
     private var api: ApiClient? = null
     private var prefs: SharedPreferences? = null
+    private var inFlightToken: String? = null
     private val reportedOpens: MutableSet<String> = Collections.synchronizedSet(HashSet())
 
     /** Call once from `Application.onCreate`. Repeat calls are ignored. */
@@ -147,13 +148,20 @@ object GammaEngage {
             Log.w(TAG, "call setPlayer() before registering a token")
             return
         }
+        synchronized(this) {
+            if (inFlightToken == token) return
+            inFlightToken = token
+        }
         val previous = p.getString(KEY_TOKEN, null)
         if (previous != null && previous != token) removeToken(player, previous)
         api?.sendEvent(
             "push_token_registered",
             player,
             listOf("device_token" to token, "platform" to "android"),
-        ) { ok -> if (ok) p.edit().putString(KEY_TOKEN, token).apply() }
+        ) { ok ->
+            synchronized(this) { if (inFlightToken == token) inFlightToken = null }
+            if (ok) p.edit().putString(KEY_TOKEN, token).apply()
+        }
     }
 
     private fun removeToken(player: String, token: String, onDone: ((Boolean) -> Unit)? = null) {
